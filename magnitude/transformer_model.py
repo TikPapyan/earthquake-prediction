@@ -22,23 +22,22 @@ class TransformerModel(nn.Module):
         )
         
         self.fc1 = nn.Linear(input_dim, self.hidden_dim)
-        self.fc2 = nn.Linear(self.hidden_dim, 1)  # Output magnitude
+        self.fc2 = nn.Linear(self.hidden_dim, 1)
     
     def forward(self, x):
         x = F.relu(self.fc1(x))
-        x = x.permute(1, 0, 2)  # Transformer expects input of shape (seq_len, batch_size, feature_dim)
+        x = x.permute(1, 0, 2)
         output = self.encoder(x)
-        output = output.mean(dim=0)  # Pooling the output
+        output = output.mean(dim=0)
         output = self.fc2(output)
         return output
 
 def train_transformer_model(train_data_path, test_data_path, epochs=100, learning_rate=0.001):
-    # Read data
     train_df = pd.read_csv(train_data_path)
     test_df = pd.read_csv(test_data_path)
 
-    features = ["depth", "rms", "magNst", "Distance_to_Nearest_Fault", "year", "month", "day", "hour"]
-    target = "mag"  # Magnitude prediction
+    features = ["depth", "rms", "magNst", "Distance_to_Nearest_Fault", "TimeToNext", "year", "month", "day", "hour", "depth_augmented", "Distance_to_Nearest_Fault_augmented", "TimeToNext_augmented"]
+    target = "mag"
 
     X_train, y_train = train_df[features].values, train_df[target].values
     X_test, y_test = test_df[features].values, test_df[target].values
@@ -55,7 +54,6 @@ def train_transformer_model(train_data_path, test_data_path, epochs=100, learnin
     X_test_tensor = torch.tensor(X_test, dtype=torch.float32)
     y_test_tensor = torch.tensor(y_test, dtype=torch.float32).view(-1, 1)
 
-    # Model and training setup
     model = TransformerModel(input_dim=X_train.shape[2])
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     criterion = nn.MSELoss()
@@ -71,7 +69,6 @@ def train_transformer_model(train_data_path, test_data_path, epochs=100, learnin
         if (epoch + 1) % 10 == 0:
             print(f"Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}")
 
-    # Evaluate the model
     model.eval()
     with torch.no_grad():
         predictions = model(X_test_tensor)
