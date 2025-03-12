@@ -5,6 +5,7 @@ from shapely.geometry import Point, LineString
 from shapely.ops import nearest_points
 from sklearn.preprocessing import MinMaxScaler
 from imblearn.over_sampling import SMOTE
+from scipy.interpolate import interp1d
 
 def calculate_distance_to_nearest_fault(row, fault_lines):
     earthquake_point = Point(row["longitude"], row["latitude"])
@@ -35,34 +36,29 @@ def process_earthquake_data(earthquake_file, fault_geojson):
     df["day"] = df["time"].dt.day
     df["hour"] = df["time"].dt.hour
     
-    # Handling Outliers
     df["mag"] = np.clip(df["mag"], 4.0, 5.6)
     df["depth"] = np.clip(df["depth"], 0, 67.5)
     
-    # Feature Scaling
     scaler = MinMaxScaler()
     df[["depth", "mag", "Distance_to_Nearest_Fault", "TimeToNext"]] = scaler.fit_transform(
         df[["depth", "mag", "Distance_to_Nearest_Fault", "TimeToNext"]]
     )
 
-def augment_earthquake_data(input_file, output_augmented, output_train, output_test, test_size=0.2, noise_factor=0.02, smote=False):
+def augment_earthquake_data(input_file, output_augmented, output_train, output_test, test_size=0.2, use_smote=False):
     df = pd.read_csv(input_file)
-    
+
     for col in ["depth", "mag", "Distance_to_Nearest_Fault", "TimeToNext"]:
-        noise = np.random.normal(0, df[col].std() * noise_factor, size=df.shape[0])
-        df[f"{col}_augmented"] = df[col] + noise
-    
-    if smote:
+        interp_func = interp1d(np.arange(len(df)), df[col], kind="linear", fill_value="extrapolate")
+        df[f"{col}_augmented"] = interp_func(np.arange(len(df)) + np.random.uniform(-0.5, 0.5, len(df)))
+
+    if use_smote:
+        smote = SMOTE(sampling_strategy="auto", random_state=42)
         features = ["depth_augmented", "Distance_to_Nearest_Fault_augmented", "TimeToNext_augmented"]
         target = "mag"
-        
-        smote = SMOTE(sampling_strategy="auto", random_state=42)
         X_resampled, y_resampled = smote.fit_resample(df[features], df[target])
-        
         df = pd.DataFrame(X_resampled, columns=features)
         df[target] = y_resampled
-
-    # Train-Test Split (Time-based)
+    
     train_size = int((1 - test_size) * len(df))
     train_df, test_df = df.iloc[:train_size], df.iloc[train_size:]
     
@@ -73,4 +69,3 @@ def augment_earthquake_data(input_file, output_augmented, output_train, output_t
     print(f"Augmented dataset saved as {output_augmented}")
     print(f"Train dataset saved as: {output_train}")
     print(f"Test dataset saved as: {output_test}")
-    print(f"Augmented dataset saved as {output_augmented}")

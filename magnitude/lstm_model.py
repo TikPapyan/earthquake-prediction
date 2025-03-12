@@ -17,7 +17,7 @@ class OptimizedLSTM(nn.Module):
         
         self.fc1 = nn.Linear(hidden_size, 64)
         self.fc2 = nn.Linear(64, 32)
-        self.fc3 = nn.Linear(32, 1)  # Output one value (magnitude)
+        self.fc3 = nn.Linear(32, 1)
     
     def forward(self, x):
         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
@@ -25,7 +25,7 @@ class OptimizedLSTM(nn.Module):
         
         out, _ = self.lstm(x, (h0, c0))
         
-        out = out[:, -1, :]  # Get the last output from the LSTM
+        out = out[:, -1, :]
         
         out = torch.relu(self.fc1(out))
         out = torch.relu(self.fc2(out))
@@ -33,9 +33,7 @@ class OptimizedLSTM(nn.Module):
         
         return out
 
-# Hyperparameter tuning function using random search
 def random_search_lstm(train_data_path, test_data_path, num_trials=10):
-    # Hyperparameter ranges
     learning_rates = [0.001, 0.0005, 0.0001]
     hidden_sizes = [64, 128, 256]
     batch_sizes = [16, 32, 64]
@@ -46,16 +44,14 @@ def random_search_lstm(train_data_path, test_data_path, num_trials=10):
     best_r2 = -float("inf")
     best_params = {}
 
-    # Read in data
     train_df = pd.read_csv(train_data_path)
     test_df = pd.read_csv(test_data_path)
     features = ["depth", "rms", "magNst", "Distance_to_Nearest_Fault", "year", "month", "day", "hour"]
-    target = "mag"  # Magnitude prediction
+    target = "mag"
 
     X_train, y_train = train_df[features].values, train_df[target].values
     X_test, y_test = test_df[features].values, test_df[target].values
     
-    # Scale the features
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
@@ -68,9 +64,7 @@ def random_search_lstm(train_data_path, test_data_path, num_trials=10):
     X_test_tensor = torch.tensor(X_test, dtype=torch.float32)
     y_test_tensor = torch.tensor(y_test, dtype=torch.float32).view(-1, 1)
 
-    # Random search
     for trial in range(num_trials):
-        # Randomly select hyperparameters
         lr = random.choice(learning_rates)
         hidden_size = random.choice(hidden_sizes)
         batch_size = random.choice(batch_sizes)
@@ -83,7 +77,6 @@ def random_search_lstm(train_data_path, test_data_path, num_trials=10):
         optimizer = optim.Adam(model.parameters(), lr=lr)
         criterion = nn.MSELoss()
 
-        # Train the model
         best_loss = float("inf")
         counter = 0
 
@@ -105,7 +98,7 @@ def random_search_lstm(train_data_path, test_data_path, num_trials=10):
                 counter = 0
             else:
                 counter += 1
-                if counter >= 10:  # Early stopping
+                if counter >= 10:
                     print(f"Early stopping at epoch {epoch+1}")
                     break
 
@@ -115,7 +108,6 @@ def random_search_lstm(train_data_path, test_data_path, num_trials=10):
             r2 = r2_score(y_test, predictions.detach().numpy())
             print(f"R² for trial {trial+1}: {r2:.4f}")
 
-            # Track the best model
             if r2 > best_r2:
                 best_r2 = r2
                 best_model = model

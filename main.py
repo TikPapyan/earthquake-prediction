@@ -15,17 +15,17 @@ correlation_matrix = 'correlation_matrix.png'
 visualization = 'visualizations'
 
 if __name__ == "__main__":
-    # process_earthquake_data(
-    #     initial_data,
-    #     active_faults_data,
-    #     processed_data,
-    #     train_data,
-    #     test_data
-    # )
-    augment_earthquake_data(processed_data, augmented_data, train_data, test_data)
-    # feature_strength_analysis(augmented_data, correlation_matrix, save_figures=True, save_dir=visualization)
-    # plot_earthquake_data(processed_data, save_figures=True, save_dir=visualization)
-    # model, scaler = train_optimized_mlp(train_data, test_data)
-    # model, scaler = train_optimized_lstm(train_data, test_data)
-    # model, scaler = random_search_lstm(train_data, test_data)
+    process_earthquake_data(
+        initial_data,
+        active_faults_data,
+        processed_data,
+        train_data,
+        test_data
+    )
+    augment_earthquake_data(processed_data, augmented_data, train_data, test_data, use_smote=False)
+    feature_strength_analysis(augmented_data, correlation_matrix, save_figures=True, save_dir=visualization)
+    plot_earthquake_data(processed_data, save_figures=True, save_dir=visualization)
+    model, scaler = train_optimized_mlp(train_data, test_data)
+    model, scaler = train_optimized_lstm(train_data, test_data)
+    model, scaler = random_search_lstm(train_data, test_data)
     model = train_transformer_model(train_data, test_data)

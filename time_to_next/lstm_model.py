@@ -110,7 +110,6 @@ def train_optimized_lstm(train_data_path, test_data_path, epochs=100, learning_r
     plt.ylabel('Predicted Values')
     plt.show()
 
-
     # torch.save(model.state_dict(), "optimized_lstm_time_to_next.pth")
     # print("Optimized LSTM Model Saved!")
 
