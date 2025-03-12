@@ -44,6 +44,8 @@ def process_earthquake_data(earthquake_file, fault_geojson):
         df[["depth", "mag", "Distance_to_Nearest_Fault", "TimeToNext"]]
     )
 
+    return df
+
 def augment_earthquake_data(input_file, output_augmented, output_train, output_test, test_size=0.2, use_smote=False):
     df = pd.read_csv(input_file)
 

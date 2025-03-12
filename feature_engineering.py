@@ -23,7 +23,7 @@ def feature_engineering(input_file: str, output_file: str, missing_threshold: fl
     df.to_csv(output_file, index=False)
     print(f"Processed file saved as: {output_file}")
 
-def feature_strength_analysis(processed_file: str, output_image: str, save_figures: bool = False, save_dir: str = "visualizations"):
+def feature_strength_analysis(processed_file, output_image, save_figures=False, save_dir="visualizations"):
     df = pd.read_csv(processed_file)
     df.drop(columns=['time'], inplace=True, errors='ignore')
 
@@ -33,18 +33,19 @@ def feature_strength_analysis(processed_file: str, output_image: str, save_figur
     print("Correlation of each feature with 'mag':")
     print(feature_correlations)
 
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
-    plt.title('Correlation Matrix')
-
     if save_figures:
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        
-        plt.savefig(os.path.join(save_dir, output_image), dpi=300, bbox_inches='tight')
-        print(f"Correlation matrix saved as {os.path.join(save_dir, output_image)}")
-    else:
-        plt.show()
+
+        output_path = os.path.join(save_dir, output_image)
+        if os.path.exists(output_path):
+            print(f"Warning: Overwriting existing file {output_path}")
+
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+        plt.title('Correlation Matrix')
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        print(f"Correlation matrix saved as {output_path}")
 
     return feature_correlations
 
